@@ -1,4 +1,4 @@
-import typing
+import typing as T
 from copy import copy
 
 import cocotb
@@ -7,7 +7,7 @@ from cocotb.binary import BinaryValue
 from cocotb.clock import Clock
 
 from  cocotb.handle import ModifiableObject
-
+from cocotb.utils import get_time_from_sim_steps
 from cocotb.triggers import FallingEdge, Timer, NextTimeStep
 
 from vipy.bus.base.serial import BaseSerial, SerialMode
@@ -19,7 +19,7 @@ from ...utils.queue import QueueEvt
 
 
 class SPIDriver(SPIBase):
-	def __init__(self, mode : SerialMode, itf : SPIBase.SPIInterface, clk_period : typing.Tuple[int,str] = (1,"us")):
+	def __init__(self, mode : SerialMode, itf : SPIBase.SPIInterface, clk_period : T.Tuple[int,str] = (1,"us")):
 		super().__init__(mode)
 		self.itf = itf
 		self.to_send : QueueEvt[DataWord] = QueueEvt()
@@ -33,60 +33,50 @@ class SPIDriver(SPIBase):
 		self._drive_process : RunningTask = None
 		self.start_csn_evt_handling()
 
-	def drive_csn(self, state : bool):
+	async def drive_csn(self, state : bool, pulse_period : T.Tuple[int,str] = None):
 		expected_state = 1 if state else 0
 		if self.itf.csn.value.integer != expected_state :
 			self.itf.csn.value = expected_state
-
+			if pulse_period is not None :
+				await Timer(*pulse_period)
+				self.itf.csn.value = 1-expected_state
+			await NextTimeStep()
 		else :
-			return
+			await NextTimeStep()
 
-	def drive_clock(self):
+	async def drive_clock(self, period : T.Tuple[int,str] = None):
 		if self._clk_driver_process is not None:
-			self.stop_clock()
-		self._clk_driver_process = cocotb.fork(self.clk_driver.start())
+			self.itf.clk._log.warning("Driving an already driven clock")
+			await self.stop_clock()
+			if period is not None and get_time_from_sim_steps(*period) != self.clk_driver.period :
+				self.clk_driver = Clock(self.itf.clk,*period)
+		self._clk_driver_process = cocotb.fork(self.clk_driver.start(start_high=self._pol))
+		await NextTimeStep()
 
-	def stop_clock(self):
+	async def stop_clock(self):
 		if self._clk_driver_process is not None :
 			self._clk_driver_process.kill()
 			self._clk_driver_process = None
 
-	def drive_tx_idle(self):
-		self.tx_pin.value.integer = 1 if self._pol else 0
+		await self.drive_clk_idle()
 
-	def reset(self):
-		self.stop_clock()
-		self.drive_tx_idle()
-		self.drive_csn(True)
+	async def drive_clk_idle(self):
+		self.itf.clk.value = 0 if self._pol else 1
+		await NextTimeStep()
 
-	def start(self):
-		self.stop()
-		self._drive_process = cocotb.start_soon(self.drive())
-
-	def stop(self):
-		if self._drive_process is not None:
-			self._drive_process.kill()
-			self._drive_process = None
-			self.stop_clock()
-			self.drive_csn(True)
-
+	async def reset(self):
+		await self.stop_clock()
+		await self.drive_csn(True)
 
 	@cocotb.coroutine
-	async def drive(self):
-		self.stop_clock()
-		self.drive_tx_idle()
-		self.drive_csn(True)
-
+	async def enable_sending(self):
 		while True:
 			if len(self._current_data) == 0 :
-				if self.to_send.empty() :
-					self.drive_csn(True)
+				if self.to_send.empty() and self.csn_pulse_per_word:
+					await self.drive_csn(True)
 				self._current_data = await self.to_send.get()
 				self.tx_pin._log.info(f"Sending word {str(self._current_data)}")
-				self.drive_csn(False)
-				if self._clk_driver_process is None :
-					await Timer(self.clk_driver.period)
-					self.drive_clock()
+				await self.drive_csn(False)
 
 			for bit in self._current_data :
 				await self.active_edge
@@ -94,9 +84,8 @@ class SPIDriver(SPIBase):
 
 			await self.inactive_edge
 			if self.csn_pulse_per_word :
-				self.drive_tx_idle()
-				self.stop_clock()
-				self.drive_csn(True)
+				await self.stop_clock()
+				await self.drive_csn(True)
 				await Timer(*self.csn_pulse_duration)
 
 			await NextTimeStep()
