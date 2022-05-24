@@ -23,7 +23,7 @@ class SPIDriver(SPIBase):
 		super().__init__(mode)
 		self.itf = itf
 		self.to_send : QueueEvt[DataWord] = QueueEvt()
-		self.csn_pulse_per_word = False
+		self.csn_pulse_per_word = True
 		self.csn_pulse_duration = clk_period
 		self._current_data = DataWord(0)
 		self._current_data.content.clear()
@@ -68,6 +68,11 @@ class SPIDriver(SPIBase):
 		await self.stop_clock()
 		await self.drive_csn(True)
 
+	def start(self):
+		if self._drive_process is not None :
+			self._drive_process.kill()
+		self._drive_process = cocotb.start_soon(self.enable_sending())
+
 	@cocotb.coroutine
 	async def enable_sending(self):
 		while True:
@@ -87,6 +92,8 @@ class SPIDriver(SPIBase):
 				await self.stop_clock()
 				await self.drive_csn(True)
 				await Timer(*self.csn_pulse_duration)
+				await self.drive_csn(False)
+				await self.drive_clock()
 
 			await NextTimeStep()
 			self.evt.word_done.set()
