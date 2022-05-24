@@ -7,10 +7,11 @@ class DataWordOverflowError(RuntimeError):
 class DataWord:
 	word_size = 8
 	msbfirst= True
-	def __init__(self, value : int, wsize = None, msbf = None):
+	def __init__(self, value : int, wsize = None, msbf = None,limit=False):
 		self._msbf = msbf if msbf is not None else DataWord.msbfirst
 		self.wsize = wsize if wsize is not None else DataWord.word_size
 		self.content : T.List[int] = list()
+		self.limit = limit
 		self._from_int(value)
 
 	def clear(self):
@@ -32,14 +33,14 @@ class DataWord:
 
 	@property
 	def is_full(self):
-		return len(self.content) >= self.wsize
+		return self.limit and len(self.content) >= self.wsize
 
 	def _from_int(self,val):
 		self.content.clear()
 		self.content = [int(x) for x in f"{val:0{self.wsize}b}"]
 		if not self.msbf :
 			self.content.reverse()
-		if len(self.content) > self.wsize :
+		if self.limit and len(self.content) > self.wsize :
 			self.content = self.content[:self.wsize]
 
 	def append(self,val : int):
