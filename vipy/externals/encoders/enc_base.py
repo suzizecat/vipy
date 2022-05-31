@@ -52,7 +52,7 @@ class EncoderBase:
 
 	@speed_tr_per_sec.setter
 	def speed_tr_per_sec(self, value):
-
+		cocotb.log.info("Update speed")
 		self._update_period =  (get_sim_steps(Fraction(1,self.resolution * value),"sec",round_mode="round"),"step")
 
 	async def run_update_position(self):
