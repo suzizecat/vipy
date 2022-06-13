@@ -1,14 +1,11 @@
 import typing as T
-from copy import copy
 
 import cocotb
 from cocotb import RunningTask
-from cocotb.binary import BinaryValue
 from cocotb.clock import Clock
 
-from  cocotb.handle import ModifiableObject
 from cocotb.utils import get_time_from_sim_steps
-from cocotb.triggers import FallingEdge, Timer, NextTimeStep
+from cocotb.triggers import *
 
 from vipy.bus.base.serial import BaseSerial, SerialMode
 from .spi_base import SPIBase
@@ -61,7 +58,7 @@ class SPIDriver(SPIBase):
 		await self.drive_clk_idle()
 
 	async def drive_clk_idle(self):
-		self.itf.clk.value = 0 if self._pol else 1
+		self.itf.clk.value = 0 if self._pol == 0 else 1
 		await NextTimeStep()
 
 	async def reset(self):
@@ -69,19 +66,27 @@ class SPIDriver(SPIBase):
 		await self.drive_csn(True)
 
 	def start(self):
+		cocotb.log.info(f"Starting SPI Driver in mode {self.spi_mode}")
 		if self._drive_process is not None :
 			self._drive_process.kill()
 		self._drive_process = cocotb.start_soon(self.enable_sending())
 
 	@cocotb.coroutine
 	async def enable_sending(self):
+		need_clk_resume = False
 		while True:
 			if len(self._current_data) == 0 :
-				if self.to_send.empty() and self.csn_pulse_per_word:
+				if self.to_send.empty():
+					await self.stop_clock()
 					await self.drive_csn(True)
+					need_clk_resume = True
+
 				self._current_data = await self.to_send.get()
-				self.tx_pin._log.info(f"Sending word {str(self._current_data)}")
-				await self.drive_csn(False)
+
+				if need_clk_resume :
+					await self.drive_csn(False)
+					await self.drive_clock()
+					need_clk_resume = False
 
 			for bit in self._current_data :
 				await self.active_edge

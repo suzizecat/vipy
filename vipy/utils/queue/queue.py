@@ -1,6 +1,6 @@
 from cocotb.queue import Queue
-from cocotb.triggers import Event
-
+from cocotb.triggers import *
+import cocotb
 
 class QueueEvt(Queue):
 	def __init__(self, maxsize = 0):
