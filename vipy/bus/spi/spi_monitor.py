@@ -2,12 +2,7 @@ import typing as T
 
 import cocotb
 from cocotb import RunningTask
-from cocotb.binary import BinaryValue
-from cocotb.clock import Clock
-from copy import copy
-from  cocotb.handle import ModifiableObject
-from cocotb.queue import Queue
-from cocotb.triggers import FallingEdge, Timer, RisingEdge, Combine, NextTimeStep
+from cocotb.triggers import *
 
 from vipy.bus.base.serial import BaseSerial, SerialMode
 from .spi_base import SPIBase
@@ -22,7 +17,7 @@ class SPIMonitor(SPIBase):
 		super().__init__(mode)
 		self.itf = itf
 		self.to_handle : QueueEvt[DataWord] = QueueEvt()
-		self.current_word = DataWord(0,wsize=self.word_size,msbf=True)
+		self.current_word = DataWord(0,wsize=self.word_size,msbf=True,limit=True)
 		self.current_word.clear()
 
 		self._processes  : T.List[RunningTask] = list()
@@ -48,7 +43,8 @@ class SPIMonitor(SPIBase):
 			self.current_word.clear()
 			await self.evt.selected.wait()
 
-	async def start(self):
+	def start(self):
+		cocotb.log.info(f"Starting SPI Monitor in mode {self.spi_mode}")
 		self.stop()
 		self._processes.append(cocotb.start_soon(self._monitor_task()))
 		self._processes.append(cocotb.start_soon(self._auto_clear_word()))

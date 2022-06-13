@@ -66,4 +66,4 @@ class DataWord:
 		return len(self.content)
 
 	def __str__(self):
-		return f"{self.wsize:2d} : {''.join([str(x) for x in self.content])}"
+		return f"{self.wsize:2d} : 0x{self.value:0{len(self)//4}X} - {''.join([str(x) for x in self.content])}"
