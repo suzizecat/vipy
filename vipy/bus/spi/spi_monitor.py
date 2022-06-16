@@ -5,7 +5,7 @@ from cocotb import RunningTask
 from cocotb.triggers import *
 
 from vipy.bus.base.serial import BaseSerial, SerialMode
-from .spi_base import SPIBase
+from .spi_base import SPIBase, SPIInterface
 import enum
 
 from ..base.word import DataWord
@@ -13,7 +13,7 @@ from ...utils.queue import QueueEvt
 
 
 class SPIMonitor(SPIBase):
-	def __init__(self, mode: SerialMode, itf: SPIBase.SPIInterface):
+	def __init__(self, mode: SerialMode, itf: SPIInterface):
 		super().__init__(mode)
 		self.itf = itf
 		self.to_handle : QueueEvt[DataWord] = QueueEvt()
@@ -27,10 +27,11 @@ class SPIMonitor(SPIBase):
 
 		if self.is_selected :
 			await RisingEdge(self.itf.csn)
-
+		if self._pha == 1 :
+			await self.capture_edge
 		while True :
-			await Combine(self.evt.selected.wait(),self.active_edge)
-			await NextTimeStep()
+			await Combine(self.evt.selected.wait(), self.capture_edge)
+
 			self.current_word.append(self.rx_pin.value.integer)
 			if self.current_word.is_full :
 				self.to_handle.put_nowait(DataWord(self.current_word.value,wsize=self.word_size,msbf=True))
