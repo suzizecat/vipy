@@ -8,7 +8,7 @@ from cocotb.utils import get_time_from_sim_steps
 from cocotb.triggers import *
 
 from vipy.bus.base.serial import BaseSerial, SerialMode
-from .spi_base import SPIBase
+from .spi_base import SPIBase, SPIInterface
 import enum
 
 from ..base.word import DataWord
@@ -16,7 +16,7 @@ from ...utils.queue import QueueEvt
 
 
 class SPIDriver(SPIBase):
-	def __init__(self, mode : SerialMode, itf : SPIBase.SPIInterface, clk_period : T.Tuple[int,str] = (1,"us")):
+	def __init__(self, mode : SerialMode, itf : SPIInterface, clk_period : T.Tuple[int,str] = (1,"us")):
 		super().__init__(mode)
 		self.itf = itf
 		self.to_send : QueueEvt[DataWord] = QueueEvt()
@@ -50,12 +50,17 @@ class SPIDriver(SPIBase):
 		self._clk_driver_process = cocotb.fork(self.clk_driver.start(start_high=self._pol))
 		await NextTimeStep()
 
-	async def stop_clock(self):
+	async def stop_clock(self, gracefully = False):
 		if self._clk_driver_process is not None :
+			if gracefully:
+				if self.itf.clk.value != self._pol:
+					await (FallingEdge(self.itf.clk) if self._pol == 0 else RisingEdge(self.itf.clk))
 			self._clk_driver_process.kill()
 			self._clk_driver_process = None
 
 		await self.drive_clk_idle()
+		if gracefully:
+			await Timer(self.clk_driver.half_period)
 
 	async def drive_clk_idle(self):
 		self.itf.clk.value = 0 if self._pol == 0 else 1
@@ -74,33 +79,37 @@ class SPIDriver(SPIBase):
 	@cocotb.coroutine
 	async def enable_sending(self):
 		need_clk_resume = False
+		first_frame_bit = False
 		while True:
 			if len(self._current_data) == 0 :
 				if self.to_send.empty():
-					await self.stop_clock()
+					await self.stop_clock(gracefully=True)
 					await self.drive_csn(True)
 					need_clk_resume = True
-
 				self._current_data = await self.to_send.get()
 
 				if need_clk_resume :
 					await self.drive_csn(False)
 					await self.drive_clock()
 					need_clk_resume = False
+					first_frame_bit = True
 
 			for bit in self._current_data :
-				await self.active_edge
+				if self._pha == 1 or not first_frame_bit :
+					await self.drive_edge
+				else :
+					first_frame_bit = False
 				self.tx_pin.value = bit
 
-			await self.inactive_edge
+			await self.capture_edge
+
 			if self.csn_pulse_per_word :
-				await self.stop_clock()
+				await self.stop_clock(gracefully=True)
 				await self.drive_csn(True)
 				await Timer(*self.csn_pulse_duration)
 				await self.drive_csn(False)
 				await self.drive_clock()
 
-			await NextTimeStep()
 			self.evt.word_done.set()
 			await NextTimeStep()
 

@@ -11,6 +11,13 @@ from vipy.bus.base.serial import BaseSerial, SerialMode
 import enum
 
 
+@dataclass
+class SPIInterface:
+	mosi: ModifiableObject = None
+	miso: ModifiableObject = None
+	clk: ModifiableObject = None
+	csn: ModifiableObject = None
+
 class SPIBase(BaseSerial):
 
 	@dataclass
@@ -20,12 +27,7 @@ class SPIBase(BaseSerial):
 		deselected: Event = Event("is_deselected")
 		word_done : Event = Event("word_done")
 
-	@dataclass
-	class SPIInterface:
-		mosi: ModifiableObject = None
-		miso: ModifiableObject = None
-		clk: ModifiableObject = None
-		csn: ModifiableObject = None
+
 
 	def __init__(self, mode : SerialMode):
 		super().__init__()
@@ -33,7 +35,7 @@ class SPIBase(BaseSerial):
 		self._pha : bool = False
 		self._pol : bool = False
 		self.evt : SPIBase.SPIEvents = SPIBase.SPIEvents()
-		self.itf : SPIBase.SPIInterface = SPIBase.SPIInterface()
+		self.itf : SPIInterface = SPIInterface()
 
 		self._monitored_events = [
 			self.evt.config_changed.wait(),
@@ -106,11 +108,11 @@ class SPIBase(BaseSerial):
 		self.evt.config_changed.clear()
 
 	@property
-	def active_edge(self) -> T.Union[RisingEdge,FallingEdge]:
+	def capture_edge(self) -> T.Union[RisingEdge, FallingEdge]:
 		rising = self._pha == self._pol
 		return RisingEdge(self.itf.clk) if rising else FallingEdge(self.itf.clk)
 
 	@property
-	def inactive_edge(self) -> T.Union[RisingEdge,FallingEdge]:
+	def drive_edge(self) -> T.Union[RisingEdge, FallingEdge]:
 		rising = self._pha != self._pol
 		return RisingEdge(self.itf.clk) if rising else FallingEdge(self.itf.clk)
