@@ -59,7 +59,11 @@ class CSVReader:
 	def _add_reg_from_line(self, line):
 		self._validate_register()
 
-		self.current_reg = Register(line[CSVReader.REGNAME],int(line[CSVReader.OFFSET],0))
+		self.current_reg = Register(
+			line[CSVReader.REGNAME],
+			int(line[CSVReader.OFFSET],0),
+			reset_value=int(line[CSVReader.RESET],0)
+		)
 
 	def _validate_register(self):
 		if self.current_reg is not None:

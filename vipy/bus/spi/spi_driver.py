@@ -87,6 +87,7 @@ class SPIDriver(SPIBase):
 			if len(self._current_data) == 0 :
 				if self.to_send.empty():
 					await self.stop_clock(gracefully=True)
+					await Timer(self.clk_driver.period)
 					await self.drive_csn(True)
 					need_clk_resume = True
 					self.is_idle.set()

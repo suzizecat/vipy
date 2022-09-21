@@ -5,9 +5,10 @@ from copy import copy
 class Register:
 	DEFAULT_SIZE = 32
 
-	def __init__(self, name : str, offset : int, reg_size : int = None):
+	def __init__(self, name : str, offset : int, reg_size : int = None, reset_value = 0):
 		self.name = name
 		self.offset = offset
+		self.reset_value = reset_value
 
 		self._size = reg_size if reg_size is not None else copy(Register.DEFAULT_SIZE)
 
@@ -28,6 +29,9 @@ class Register:
 	def __iter__(self):
 		return self.fields.values().__iter__()
 
+	def reset(self):
+		self.value = self.reset_value
+
 	@property
 	def value(self):
 		ret = 0
@@ -43,3 +47,8 @@ class Register:
 	@property
 	def mask(self):
 		return (2**self._size) - 1
+
+	def write_value(self, value):
+		for f in self :
+			if f.access.is_writable_by_itf :
+				f.int_value = value
