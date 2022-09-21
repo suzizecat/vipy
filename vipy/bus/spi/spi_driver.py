@@ -30,6 +30,9 @@ class SPIDriver(SPIBase):
 		self._drive_process : RunningTask = None
 		self.start_csn_evt_handling()
 
+		self.is_idle = Event()
+		self.is_idle.set()
+
 	async def drive_csn(self, state : bool, pulse_period : T.Tuple[int,str] = None):
 		expected_state = 1 if state else 0
 		if self.itf.csn.value.integer != expected_state :
@@ -86,7 +89,9 @@ class SPIDriver(SPIBase):
 					await self.stop_clock(gracefully=True)
 					await self.drive_csn(True)
 					need_clk_resume = True
+					self.is_idle.set()
 				self._current_data = await self.to_send.get()
+				self.is_idle.clear()
 
 				if need_clk_resume :
 					await self.drive_csn(False)
