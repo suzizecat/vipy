@@ -1,0 +1,57 @@
+from .component import Component
+from .globalenv import GlobalEnv
+from abc import ABC, abstractmethod
+from cocotb.handle import ModifiableObject
+
+import functools
+from dataclasses import *
+
+
+class GenericDriver(Component,ABC):
+	def __init__(self):
+		super().__init__()
+		self._driven_signals = set()
+		self.active = False
+
+	@staticmethod
+	def drive_method(func):
+		@functools.wraps(func)
+		async def wrap(self : "GenericDriver",*args,**kwargs) :
+			if not self.is_active :
+				pass
+			else :
+				return await func(self,*args,**kwargs)
+		return wrap
+
+	@abstractmethod
+	async def reset(self):
+		raise NotImplementedError()
+
+	@property
+	def is_driver(self):
+		return True
+
+	def build(self):
+		if self.itf is not None :
+			self.active = GlobalEnv().register_driver(self)
+		super().build()
+
+	def register_signal_as_driven(self,signal : ModifiableObject):
+		self._driven_signals.add(signal)
+
+	def register_itf_as_driven(self):
+		for signal in [getattr(self.itf, field.name) for field in fields(self.itf)] :
+			self.register_signal_as_driven(signal)
+
+	def register_remaining_signals_as_driven(self):
+		driven_signals = list()
+		drv : "GenericDriver"
+		for drv in self.drivers :
+			driven_signals.extend(drv._driven_signals)
+		for signal in [getattr(self.itf, field.name) for field in fields(self.itf)] :
+			if signal in driven_signals :
+				continue
+			self.register_signal_as_driven(signal)
+
+	def unregister_signal_as_driven(self,signal : ModifiableObject):
+		self._driven_signals.remove(signal)

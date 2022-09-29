@@ -27,8 +27,6 @@ class SPIBase(BaseSerial):
 		deselected: Event = Event("is_deselected")
 		word_done : Event = Event("word_done")
 
-
-
 	def __init__(self, mode : SerialMode):
 		super().__init__()
 		self._serial_mode = mode
