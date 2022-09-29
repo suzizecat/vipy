@@ -2,7 +2,7 @@ import os
 import logging
 import csv
 from ..structure import *
-
+import typing as T
 log = logging.getLogger(__name__)
 
 
@@ -44,7 +44,7 @@ class CSVReader:
 
 			self._validate_register()
 
-	def _process_csv_line(self, line : list[str]):
+	def _process_csv_line(self, line : T.List[str]):
 		nline = ["" for i in range(CSVReader.COMMENT +1)]
 
 		for i in range(len(line)) :
