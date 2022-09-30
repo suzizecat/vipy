@@ -26,7 +26,7 @@ class ClockDriver(GenericDriver):
 		if self._clk_process is None :
 			return
 
-		self._log.info(f"Stopping clock")
+		self._log.llow(f"Stopping clock")
 		if gracefully :
 			await FallingEdge(self.itf.clock) if self.idle_state == 0 else RisingEdge(self.itf.clock)
 			await Timer(self.period // 2)
@@ -35,17 +35,17 @@ class ClockDriver(GenericDriver):
 
 	@drive_method
 	async def start(self, period : T.Tuple[int,str] = None):
-		self._log.info(f"Starting clock")
+		self._log.llow(f"Starting clock")
 		await self.stop(gracefully=False)
 		if period is not None :
 			self.period = get_sim_steps(*period)
 		self._clk_process = await cocotb.start(Clock(self.itf.clock,self.period).start())
-		self._log.info(f"Clock started")
+		self._log.llow(f"Clock started")
 
 	@drive_method
 	async def reset(self):
-		self._log.info(f"Reset command")
+		self._log.llow(f"Reset command")
 		await self.stop(gracefully=False)
 		self.itf.clock.value = 0
-		self._log.info(f"Reset done")
+		self._log.llow(f"Reset done")
 

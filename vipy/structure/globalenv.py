@@ -14,14 +14,14 @@ class VipyLogAdapter(LoggerAdapter):
 	LOW = logging.INFO+1
 	MEDIUM = LOW +1
 	HIGH = MEDIUM+1
-	DEFAULT = MEDIUM
+	DEFAULT = logging.INFO
 	def __init__(self,ref,level = None):
 		self.ref = ref
 		logger_name = "vipy"
 		if ref.name is not None :
-			logger_name = f"{ref.name}"
-		logger = cocotb.log.getChild(logger_name)
-		super().__init__(logger)
+			logger_name += f".{ref.name}"
+		logger = logging.getLogger().getChild(logger_name)
+		super().__init__(logger,dict())
 
 		envlevel = os.environ["VIPY_LOG"] if "VIPY_LOG" in os.environ else None
 
@@ -36,6 +36,9 @@ class VipyLogAdapter(LoggerAdapter):
 			except ValueError as e :
 				self.error(f"Error when using VIPY_LOG level '{envlevel}' : {e!s}")
 				self.setLevel(VipyLogAdapter.DEFAULT)
+		else :
+			self.setLevel(VipyLogAdapter.DEFAULT)
+
 
 	def indent(self,addlevel = 1):
 		GlobalEnv()._indent += addlevel

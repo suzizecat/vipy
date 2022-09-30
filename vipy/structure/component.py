@@ -12,7 +12,7 @@ class Component(object):
 		self.itf = None
 		self.active = True
 
-		self._log = cocotb.log
+		self._log : VipyLogAdapter = cocotb.log
 
 	@property
 	def name(self):
@@ -55,7 +55,8 @@ class Component(object):
 			comp.build()
 
 		self.end_of_build()
-		GlobalEnv()._log.lhigh(f"Built component {self._name}")
+		active_state = "  ACTIVE" if self.is_active else "INACTIVE"
+		GlobalEnv()._log.lhigh(f"Built component {self._name:{GlobalEnv()._namelen}s} : {active_state} {type(self).__name__}")
 		if GlobalEnv().top is self :
 			GlobalEnv()._log.lhigh(f"{' BUILD ENV COMPLETE ':#^80s}")
 			GlobalEnv()._log.lhigh(f"")
@@ -75,11 +76,10 @@ class Component(object):
 
 	async def reset_drivers(self):
 		rst_process_list = list()
-
+		self._log.debug(f"Reseting drivers for {self.name}")
 		for d in self.drivers :
-			if d.is_active :
-				self._log.debug(f"Reseting driver {d._name}")
-				rst_process_list.append(cocotb.start_soon(d.reset()).join())
+			rst_process_list.append(cocotb.start_soon(d.reset()).join())
+
 		if len(rst_process_list) > 0 :
 			await Combine(*rst_process_list)
 		

@@ -21,7 +21,7 @@ class ResetDriver(GenericDriver):
 
 	@drive_method
 	async def reset(self):
-		self._log.info(f"{self.name} - Reset command")
+		self._log.llow(f"Reset command")
 		self.itf.reset.value = self.active_state
 		await Timer(10,"ns")
 		self.itf.reset.value = 1-self.active_state
