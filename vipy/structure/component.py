@@ -1,13 +1,13 @@
 import cocotb
 from cocotb.triggers import *
 
-from .globalenv import GlobalEnv
-from .globalenv import GlobalEnv
+from .globalenv import GlobalEnv, VipyLogAdapter
 
 import typing as T
 
-class Component:
+class Component(object):
 	def __init__(self):
+		super().__init__()
 		self._name = None
 		self.itf = None
 		self.active = True
@@ -32,24 +32,33 @@ class Component:
 	def is_driver(self):
 		return False
 
+	def end_of_build(self):
+		pass
+
 	def build(self,is_top = False):
 		if GlobalEnv().top is None :
 			GlobalEnv().top = self
-			self._log.info(f"")
-			self._log.info(f"{' BUILD ENV START ':#^80s}")
+			GlobalEnv()._log.lhigh(f"")
+			GlobalEnv()._log.lhigh(f"{' BUILD ENV START ':#^80s}")
 		elif GlobalEnv().top is self :
-				self._log.info(f"{self._name} - Avoid rebuilding component {self._name}")
+				GlobalEnv()._log.lhigh(f"Avoid rebuilding component {self._name}")
 				return
 
 		if self._name is None :
 			self._name = type(self).__name__
+
+		self._log = VipyLogAdapter(self)
+		self._log.debug(f"Set vipy logger for component {self.name}")
+
 		self._refresh_sub_names()
 		for comp in self.subcomponents :
 			comp.build()
-		self._log.info(f"Built component {self._name}")
+
+		self.end_of_build()
+		GlobalEnv()._log.lhigh(f"Built component {self._name}")
 		if GlobalEnv().top is self :
-			self._log.info(f"{' BUILD ENV CONPLETE ':#^80s}")
-			self._log.info(f"")
+			GlobalEnv()._log.lhigh(f"{' BUILD ENV COMPLETE ':#^80s}")
+			GlobalEnv()._log.lhigh(f"")
 
 	def _refresh_sub_names(self):
 		for n, var in vars(self).items():

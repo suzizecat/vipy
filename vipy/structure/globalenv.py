@@ -1,14 +1,82 @@
+import logging
+
 from vipy.utils.meta import Singleton
 import typing as T
 from cocotb.handle import ModifiableObject
+import cocotb
+from cocotb.log import SimBaseLog
+from logging import LoggerAdapter, Filter
+import os
+from inspect import getmodule
 
+
+class VipyLogAdapter(LoggerAdapter):
+	LOW = logging.INFO+1
+	MEDIUM = LOW +1
+	HIGH = MEDIUM+1
+	DEFAULT = MEDIUM
+	def __init__(self,ref,level = None):
+		self.ref = ref
+		logger_name = "vipy"
+		if ref.name is not None :
+			logger_name = f"{ref.name}"
+		logger = cocotb.log.getChild(logger_name)
+		super().__init__(logger)
+
+		envlevel = os.environ["VIPY_LOG"] if "VIPY_LOG" in os.environ else None
+
+		if level is not None :
+			self.setLevel(level)
+		elif envlevel is not None :
+			try:
+				self.setLevel(envlevel)
+			except TypeError as e :
+				self.error(f"Error when using VIPY_LOG level '{envlevel}' : {e!s}")
+				self.setLevel(VipyLogAdapter.DEFAULT)
+			except ValueError as e :
+				self.error(f"Error when using VIPY_LOG level '{envlevel}' : {e!s}")
+				self.setLevel(VipyLogAdapter.DEFAULT)
+
+	def indent(self,addlevel = 1):
+		GlobalEnv()._indent += addlevel
+
+	def deindent(self,sublevel = 1):
+		if GlobalEnv()._indent > 0 :
+			GlobalEnv()._indent -= sublevel
+
+	def lhigh( self, msg: object, *args, **kwargs) -> None:
+		self.log(self.HIGH,msg,*args,**kwargs)
+
+	def lmed( self, msg: object,*args: object, **kwargs: object ) -> None:
+		self.log(self.MEDIUM, msg, *args, **kwargs)
+
+	def llow( self, msg: object,*args: object,**kwargs: object ) -> None:
+		self.log(self.LOW, msg, *args,**kwargs)
+
+	def process(self, msg, kwargs):
+		#return (f"{self.ref.name:{GlobalEnv()._namelen}s} - {msg}", kwargs)
+
+		return (f" - {msg}", kwargs)
 
 class GlobalEnv(metaclass=Singleton):
 	def __init__(self):
+		logging.addLevelName(logging.INFO, " ")
+		logging.addLevelName(VipyLogAdapter.LOW,"LOW")
+		logging.addLevelName(VipyLogAdapter.MEDIUM, "MEDIUM")
+		logging.addLevelName(VipyLogAdapter.HIGH, "HIGH")
+
+		self.name = "global"
+		self._log = VipyLogAdapter(self)
+
 		self.signals_to_driver = dict()
 		self._namelen = 1
 		self.built = False
 		self.top = None
+
+		self._ident_level = 0
+
+		#mod = getmodule(SimBaseLog)
+		#mod._RECORD_CHARS = 20
 
 	def is_driven(self,net : T.Union[ModifiableObject,str]):
 		name = None

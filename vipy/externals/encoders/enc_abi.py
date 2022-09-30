@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 
 import cocotb
-from cocotb import RunningTask
+from cocotb import Task
 from cocotb.handle import ModifiableObject
 from cocotb.triggers import NextTimeStep
 from .enc_base import EncoderBase
@@ -18,7 +18,7 @@ class EncoderABI(EncoderBase):
 		super().__init__(resolution*4,position)
 		self.itf = itf
 
-		self.drive_process : RunningTask = None
+		self.drive_process : Task = None
 
 	def abi_from_position(self):
 		a_value = (self.position % 4) in [1,2]

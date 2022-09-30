@@ -114,3 +114,7 @@ class SPIBase(BaseSerial):
 	def drive_edge(self) -> T.Union[RisingEdge, FallingEdge]:
 		rising = self._pha != self._pol
 		return RisingEdge(self.itf.clk) if rising else FallingEdge(self.itf.clk)
+
+	@property
+	def clk_idle(self):
+		return 0 if self._pol == 0 else 1

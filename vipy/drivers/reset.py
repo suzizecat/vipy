@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from cocotb.handle import ModifiableObject
 from cocotb.triggers import *
-from vipy.structure import GenericDriver, GlobalEnv
+from vipy.structure import GenericDriver, GlobalEnv, drive_method
 
 
 class ResetDriver(GenericDriver):
@@ -19,7 +19,7 @@ class ResetDriver(GenericDriver):
 
 		self.register_itf_as_driven()
 
-	@GenericDriver.drive_method
+	@drive_method
 	async def reset(self):
 		self._log.info(f"{self.name} - Reset command")
 		self.itf.reset.value = self.active_state

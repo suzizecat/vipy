@@ -1,7 +1,7 @@
 import typing as T
 
 import cocotb
-from cocotb import RunningTask
+from cocotb import Task
 from cocotb.triggers import *
 
 from vipy.bus.base.serial import BaseSerial, SerialMode
@@ -20,7 +20,7 @@ class SPIMonitor(SPIBase):
 		self.current_word = DataWord(0,wsize=self.word_size,msbf=True,limit=True)
 		self.current_word.clear()
 
-		self._processes  : T.List[RunningTask] = list()
+		self._processes  : T.List[Task] = list()
 
 	@cocotb.coroutine
 	async def _monitor_task(self):
@@ -45,7 +45,7 @@ class SPIMonitor(SPIBase):
 			await self.evt.selected.wait()
 
 	def start(self):
-		cocotb.log.info(f"Starting SPI Monitor in mode {self.spi_mode}")
+		#cocotb.log.info(f"Starting SPI Monitor in mode {self.spi_mode}")
 		self.stop()
 		self._processes.append(cocotb.start_soon(self._monitor_task()))
 		self._processes.append(cocotb.start_soon(self._auto_clear_word()))

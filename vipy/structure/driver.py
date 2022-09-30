@@ -7,21 +7,21 @@ import functools
 from dataclasses import *
 
 
+def drive_method(func):
+	@functools.wraps(func)
+	async def wrap(self: "GenericDriver", *args, **kwargs):
+		if not self.is_active:
+			pass
+		else:
+			return await func(self, *args, **kwargs)
+	return wrap
+
+
 class GenericDriver(Component,ABC):
 	def __init__(self):
 		super().__init__()
 		self._driven_signals = set()
 		self.active = False
-
-	@staticmethod
-	def drive_method(func):
-		@functools.wraps(func)
-		async def wrap(self : "GenericDriver",*args,**kwargs) :
-			if not self.is_active :
-				pass
-			else :
-				return await func(self,*args,**kwargs)
-		return wrap
 
 	@abstractmethod
 	async def reset(self):

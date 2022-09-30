@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 import typing as T
 import cocotb
-from cocotb import RunningTask
+from cocotb import Task
 from cocotb.triggers import Event, First, Timer, _Event
 from fractions import Fraction
 
@@ -28,7 +28,7 @@ class EncoderBase:
 			self.evt.spd_changed.wait()
 		]
 
-		self._update_position : RunningTask = None
+		self._update_position : Task = None
 		self.position = position
 
 	@property
