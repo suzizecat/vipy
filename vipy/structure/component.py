@@ -2,14 +2,14 @@ import cocotb
 from cocotb.triggers import *
 
 from .globalenv import GlobalEnv, VipyLogAdapter
-
+from dataclasses import  *
 import typing as T
 
 class Component(object):
 	def __init__(self):
 		super().__init__()
 		self._name = None
-		self.itf = None
+		self.itf  = None
 		self.active = True
 
 		self._log : VipyLogAdapter = cocotb.log
@@ -82,4 +82,13 @@ class Component(object):
 
 		if len(rst_process_list) > 0 :
 			await Combine(*rst_process_list)
+
+	def bind_itf(self,device):
+		for name in [getattr(self.itf, field.name) for field in fields(self.itf)] :
+			try :
+				setattr(self.itf,name,device._id(name,extended=False))
+			except AttributeError as e :
+				pass
+
+
 		

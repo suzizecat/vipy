@@ -101,3 +101,9 @@ class GlobalEnv(metaclass=Singleton):
 		for net in driver._driven_signals :
 			self.signals_to_driver[net._path] = driver
 		return True
+
+	def get_top(self,top_type,*args,force=False,**kwargs):
+		if force or self.top is None :
+			return top_type(*args,**kwargs)
+		else :
+			return self.top
