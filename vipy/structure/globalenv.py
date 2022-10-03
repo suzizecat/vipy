@@ -70,6 +70,7 @@ class GlobalEnv(metaclass=Singleton):
 
 		self.name = "global"
 		self._log = VipyLogAdapter(self)
+		self._log.name
 
 		self.signals_to_driver = dict()
 		self._namelen = 1
@@ -102,8 +103,11 @@ class GlobalEnv(metaclass=Singleton):
 			self.signals_to_driver[net._path] = driver
 		return True
 
-	def get_top(self,top_type,*args,force=False,**kwargs):
+	def get_top(self,top_type,*args,force=False,build=True,**kwargs):
 		if force or self.top is None :
-			return top_type(*args,**kwargs)
+			ret = top_type(*args, **kwargs)
+			if build :
+				ret.build()
+			return ret
 		else :
 			return self.top
