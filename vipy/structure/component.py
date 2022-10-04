@@ -5,6 +5,19 @@ from .globalenv import GlobalEnv, VipyLogAdapter
 from dataclasses import  *
 import typing as T
 
+def bind_itf(itf,device):
+	for name in [getattr(itf, field.name) for field in fields(itf)] :
+		try :
+			GlobalEnv()._log.debug(f"Trying to bind net name {name!s}")
+			if name is None :
+				continue
+			setattr(itf,name,device._id(name,extended=False))
+		except AttributeError as e :
+			GlobalEnv()._log.debug(f"Failed to bind net {name}")
+			pass
+	return itf
+
+
 class Component(object):
 	def __init__(self):
 		super().__init__()
@@ -85,11 +98,6 @@ class Component(object):
 			await Combine(*rst_process_list)
 
 	def bind_itf(self,device):
-		for name in [getattr(self.itf, field.name) for field in fields(self.itf)] :
-			try :
-				setattr(self.itf,name,device._id(name,extended=False))
-			except AttributeError as e :
-				pass
-
+		self.itf = bind_itf(self.itf,device)
 
 		

@@ -29,7 +29,7 @@ class SignalDriver(GenericDriver):
 		self.itf.sig.value = value
 
 	@drive_method
-	async def pulse(self,value, time = 1, unit = "ns"):
+	async def pulse(self,value, time = 1, unit = "step"):
 		self.itf.sig.value = value
 		await Timer(time,unit)
 		self.itf.sig.value = self.reset_state

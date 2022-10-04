@@ -31,6 +31,13 @@ class GenericDriver(Component,ABC):
 	def is_driver(self):
 		return True
 
+	@property
+	def driven_signals(self) :
+		ret= list(self._driven_signals)
+		for d in self.drivers :
+			ret.extend(d.driven_signals)
+		return ret
+
 	def build(self):
 		if self.itf is not None :
 			self.active = GlobalEnv().register_driver(self)
@@ -47,7 +54,7 @@ class GenericDriver(Component,ABC):
 		driven_signals = list()
 		drv : "GenericDriver"
 		for drv in self.drivers :
-			driven_signals.extend(drv._driven_signals)
+			driven_signals.extend(drv.driven_signals)
 		for signal in [getattr(self.itf, field.name) for field in fields(self.itf) if pattern is None or fnmatch(field.name,pattern)] :
 			if signal in driven_signals :
 				continue

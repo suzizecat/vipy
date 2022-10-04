@@ -91,25 +91,26 @@ class GlobalEnv(metaclass=Singleton):
 		return name in self.signals_to_driver
 
 	def register_driver(self,driver):
-		driver._log.debug(f"Registering driver {driver.name}.")
+		self._log.debug(f"Registering driver {driver.name}.")
 		net : ModifiableObject
 		for net in driver._driven_signals :
 			if net is None :
-				driver._log.debug(f"    Net set to None, considered as not present.")
+				self._log.debug(f"    Net set to None, considered as not present.")
 				return False
 			driver._log.debug(f"    Checking driven net {net._path}")
 			if self.is_driven(net) :
-				driver._log.debug(f"       Net {net._path} is already driven")
+				self._log.debug(f"       Net {net._path} is already driven by {self.signals_to_driver[net._path].name}")
 				return False
 
 		for net in driver._driven_signals :
 			self.signals_to_driver[net._path] = driver
 		return True
 
-	def get_top(self,top_type,*args,force=False,build=True,**kwargs):
+	def get_top(self,top_type,*args,topname="top",force=False,build=True,**kwargs):
 		if force or self.top is None :
 			ret = top_type(*args, **kwargs)
 			if build :
+				ret.name = topname
 				ret.build()
 			return ret
 		else :

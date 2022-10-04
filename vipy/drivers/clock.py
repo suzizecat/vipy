@@ -49,3 +49,5 @@ class ClockDriver(GenericDriver):
 		self.itf.clock.value = 0
 		self._log.llow(f"Reset done")
 
+	
+
