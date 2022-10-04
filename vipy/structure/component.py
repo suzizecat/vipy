@@ -21,8 +21,9 @@ class Component(object):
 	@name.setter
 	def name(self,value):
 		self._name = value
-		GlobalEnv()._namelen = max(GlobalEnv()._namelen,len(self._name))
-		self._refresh_sub_names()
+		if value is not None :
+			GlobalEnv()._namelen = max(GlobalEnv()._namelen,len(self._name))
+			self._refresh_sub_names()
 
 	@property
 	def subcomponents(self):
