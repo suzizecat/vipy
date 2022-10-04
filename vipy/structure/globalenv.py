@@ -94,6 +94,9 @@ class GlobalEnv(metaclass=Singleton):
 		driver._log.debug(f"Registering driver {driver.name}.")
 		net : ModifiableObject
 		for net in driver._driven_signals :
+			if net is None :
+				driver._log.debug(f"    Net set to None, considered as not present.")
+				return False
 			driver._log.debug(f"    Checking driven net {net._path}")
 			if self.is_driven(net) :
 				driver._log.debug(f"       Net {net._path} is already driven")
