@@ -46,6 +46,14 @@ class Component(object):
 	def is_driver(self):
 		return False
 
+	@property
+	def is_checker(self):
+		return False
+
+	@property
+	def is_monitor(self):
+		return False
+
 	def end_of_build(self):
 		pass
 
@@ -80,9 +88,24 @@ class Component(object):
 			if isinstance(var, Component):
 				var.name = f"{self.name}.{n}"
 
+	async def reset(self):
+		pass
+
 	@property
 	def drivers(self) -> T.List["GenericDrivers"]:
 		return [x for x in vars(self).values() if isinstance(x,Component) and x.is_driver]
+
+	@property
+	def checkers(self) :
+		return [x for x in vars(self).values() if isinstance(x,Component) and x.is_checker]
+
+	@property
+	def monitors(self) :
+		return [x for x in vars(self).values() if isinstance(x,Component) and x.is_monitor]
+
+	@property
+	def simplecomponents(self) :
+		return [x for x in vars(self).values() if isinstance(x,Component) and not  (x.is_monitor or x.is_checker or x.is_driver)]
 
 	@property
 	def is_active(self):
@@ -96,6 +119,41 @@ class Component(object):
 
 		if len(rst_process_list) > 0 :
 			await Combine(*rst_process_list)
+
+	async def reset_monitor(self):
+		rst_process_list = list()
+		self._log.debug(f"Reseting monitors for {self.name}")
+		for d in self.monitors :
+			rst_process_list.append(cocotb.start_soon(d.reset()).join())
+
+		if len(rst_process_list) > 0 :
+			await Combine(*rst_process_list)
+
+	async def reset_checkers(self):
+		rst_process_list = list()
+		self._log.debug(f"Reseting checkers for {self.name}")
+		for d in self.checkers :
+			rst_process_list.append(cocotb.start_soon(d.reset()).join())
+
+		if len(rst_process_list) > 0 :
+			await Combine(*rst_process_list)
+
+	async def reset_components(self):
+		rst_process_list = list()
+		self._log.debug(f"Reseting simples components for {self.name}")
+		for d in self.simplecomponents :
+			rst_process_list.append(cocotb.start_soon(d.reset()).join())
+
+		if len(rst_process_list) > 0 :
+			await Combine(*rst_process_list)
+
+	async def reset_all(self):
+		rst_process_list = list()
+		rst_process_list.append(cocotb.start_soon(self.reset_drivers()).join())
+		rst_process_list.append(cocotb.start_soon(self.reset_monitor()).join())
+		rst_process_list.append(cocotb.start_soon(self.reset_checkers()).join())
+		rst_process_list.append(cocotb.start_soon(self.reset_components()).join())
+		await Combine(*rst_process_list)
 
 	def bind_itf(self,device):
 		self.itf = bind_itf(self.itf,device)

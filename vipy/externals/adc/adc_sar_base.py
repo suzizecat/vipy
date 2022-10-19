@@ -60,7 +60,7 @@ class AdcSarBase(GenericDriver):
 			if trigger is pd_evt :
 				continue
 			self.evt_pu_done.set()
-			self._adc_process = cocotb.start_soon(self.adc_process())
+			self._adc_process = await cocotb.start(self.adc_process())
 			await pd_evt
 			self.evt_pu_done.clear()
 			self.evt_pd.set()
