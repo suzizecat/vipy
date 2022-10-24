@@ -21,6 +21,7 @@ class Checker(Component, ABC) :
 		self._sensitivity_list : T.List[Trigger] = list()
 
 		self._run_process : Task = None
+		self._trigger_event = None
 
 	@property
 	def is_checker(self):
@@ -35,7 +36,7 @@ class Checker(Component, ABC) :
 
 	async def _run(self):
 		while True:
-			await First(*self._sensitivity_list)
+			self._trigger_event = await First(*self._sensitivity_list)
 			await ReadOnly()
 			self.check()
 

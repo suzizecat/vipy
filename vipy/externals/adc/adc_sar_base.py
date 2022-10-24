@@ -37,23 +37,48 @@ class AdcSarBase(GenericDriver):
 		self._power_process : Task = None
 		self._adc_process : Task = None
 
+	def fit_timings(self,clk_period,cycles_pu,cycles_start,cycles_conversion) :
+		base_time = clk_period
+		self.req_enable_len = cycles_pu * base_time
+		self.req_start_time = cycles_start * base_time
+		self.req_clk_cycles_conversion = cycles_conversion
+
+	def end_of_build(self):
+		self._log.llow(f"ADC SAR Timing parameters are:")
+		self._log.llow(f"  POWER-UP    : {get_time_from_sim_steps(self.req_enable_len,'ns')} ns")
+		self._log.llow(f"  START PULSE : {get_time_from_sim_steps(self.req_start_time,'ns')} ns")
+		self._log.llow(f"  CONV. CYCLEs: {self.req_clk_cycles_conversion} cycles")
+	
+
 	@drive_method
 	async def reset(self):
+		self._log.llow(f"Reset requested")
+		if self._adc_process is not None :
+			self._log.debug(f"Kill ADC process")
+			self._adc_process.kill()		
+			self._adc_process = None	
 		if self._power_process is not None :
+			self._log.debug(f"Kill main process")
 			self._power_process.kill()
+			self._power_process = None
+		self._log.debug(f"Reset drivers")
 		await self.reset_drivers()
 		self.itf.o_eoc.value = 0
 		self.itf.o_data.value = 0
-		self._power_process = await cocotb.start(self.handle_enable())
+		self._log.debug(f"Restart power process")
+		self._power_process = cocotb.start_soon(self.handle_enable())
 
 	async def handle_enable(self):
+		self._log.debug(f"Start power handler")
 		pd_evt = FallingEdge(self.itf.i_en)
-
+		self._log.llow(f"ADC SAR : Enable detected")
 		while True :
 			if self._adc_process is not None :
+				self._log.debug(f"Kill a running ADC process")
 				self._adc_process.kill()
 				self._adc_process = None
-				await self.reset()
+				self.itf.o_eoc.value = 0
+				self.itf.o_data.value = 0
 			await RisingEdge(self.itf.i_en)
 			self.evt_pd.clear()
 			trigger = await First(pd_evt,Timer(self.req_enable_len))
@@ -62,6 +87,7 @@ class AdcSarBase(GenericDriver):
 			self.evt_pu_done.set()
 			self._adc_process = await cocotb.start(self.adc_process())
 			await pd_evt
+			self._log.llow("Power down event detected")
 			self.evt_pu_done.clear()
 			self.evt_pd.set()
 

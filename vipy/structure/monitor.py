@@ -27,6 +27,7 @@ class Monitor(Component, ABC) :
 		self._run_process : Task = None
 		self._autoreset_process = None
 		self.evt = None
+		self._trigger_event = None
 
 	@abstractmethod
 	def monitor(self):
@@ -41,11 +42,11 @@ class Monitor(Component, ABC) :
 
 	async def _run(self):
 		while True:
-			await First(*self._sensitivity_list)
+			self._trigger_event = await First(*self._sensitivity_list)
 			await ReadOnly()
 			self.monitor()
 
-	async def _reset_events(self):
+	async def _autoreset_events(self):
 		if len(self._autoreset_events) > 0 :
 			_trigger_events = [e.wait() for e in self._autoreset_events]
 			evt_trigger  : _Event = None
@@ -55,7 +56,7 @@ class Monitor(Component, ABC) :
 
 	async def build(self,is_top = False):
 		super(Monitor, self).build(is_top)
-		self._autoreset_process = cocotb.start_soon(self._reset_events())
+		self._autoreset_process = cocotb.start_soon(self._autoreset_events())
 
 	def start(self):
 		if self._run_process is not None :
@@ -78,3 +79,7 @@ class Monitor(Component, ABC) :
 	def add_itf_to_sensitivity(self, pattern):
 		for signal in [getattr(self.itf, field.name) for field in fields(self.itf) if pattern is None or fnmatch(field.name,pattern)] :
 			self.add_evt_to_sensitivity(Edge(signal))
+
+	def add_evt_to_autoreset(self, evt : Event):
+		if evt not in self._autoreset_events :
+			self._autoreset_events.append(evt)

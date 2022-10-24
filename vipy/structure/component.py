@@ -78,7 +78,11 @@ class Component(object):
 
 		self.end_of_build()
 		active_state = "  ACTIVE" if self.is_active else "INACTIVE"
-		GlobalEnv()._log.lhigh(f"Built component {self._name:{GlobalEnv()._namelen}s} : {active_state} {type(self).__name__}")
+		if self.is_active :
+			GlobalEnv()._log.lhigh(f"Built component {self._name:{GlobalEnv()._namelen}s} : {active_state} {type(self).__name__}")
+		else:
+			GlobalEnv()._log.llow(f"Built component {self._name:{GlobalEnv()._namelen}s} : {active_state} {type(self).__name__}")
+
 		if GlobalEnv().top is self :
 			GlobalEnv()._log.lhigh(f"{' BUILD ENV COMPLETE ':#^80s}")
 			GlobalEnv()._log.lhigh(f"")

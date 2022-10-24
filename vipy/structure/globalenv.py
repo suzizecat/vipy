@@ -47,14 +47,15 @@ class VipyLogAdapter(LoggerAdapter):
 		if GlobalEnv()._indent > 0 :
 			GlobalEnv()._indent -= sublevel
 
-	def lhigh( self, msg: object, *args, **kwargs) -> None:
-		self.log(self.HIGH,msg,*args,**kwargs)
 
-	def lmed( self, msg: object,*args: object, **kwargs: object ) -> None:
-		self.log(self.MEDIUM, msg, *args, **kwargs)
+	def lhigh( self, msg: object, *args,stacklevel : int=1, **kwargs) -> None:
+		self.log(self.HIGH,msg,*args,stacklevel=stacklevel+2,**kwargs)
 
-	def llow( self, msg: object,*args: object,**kwargs: object ) -> None:
-		self.log(self.LOW, msg, *args,**kwargs)
+	def lmed( self, msg: object,*args: object,stacklevel : int=1, **kwargs: object ) -> None:
+		self.log(self.MEDIUM, msg, *args,stacklevel=stacklevel+2, **kwargs)
+
+	def llow( self, msg: object,*args: object,stacklevel : int=1,**kwargs: object ) -> None:
+		self.log(self.LOW, msg, *args,stacklevel=stacklevel+2,**kwargs)
 
 	def process(self, msg, kwargs):
 		#return (f"{self.ref.name:{GlobalEnv()._namelen}s} - {msg}", kwargs)
@@ -70,7 +71,7 @@ class GlobalEnv(metaclass=Singleton):
 
 		self.name = "global"
 		self._log = VipyLogAdapter(self)
-		self._log.name
+
 
 		self.signals_to_driver = dict()
 		self._namelen = 1
@@ -79,8 +80,8 @@ class GlobalEnv(metaclass=Singleton):
 
 		self._ident_level = 0
 
-		#mod = getmodule(SimBaseLog)
-		#mod._RECORD_CHARS = 20
+		mod = getmodule(SimBaseLog)
+		mod._FILENAME_CHARS = 40
 
 	def is_driven(self,net : T.Union[ModifiableObject,str]):
 		name = None
