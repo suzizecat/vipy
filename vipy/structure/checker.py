@@ -54,7 +54,8 @@ class Checker(Component, ABC) :
 
 	def add_evt_to_sensitivity(self,evt : Trigger):
 		if evt not in self._sensitivity_list :
-			self._sensitivity_list.append(evt)
+			trg = evt.wait() if isinstance(evt,Event) else evt
+			self._sensitivity_list.append(trg)
 
 	def add_edge_to_sensitivity(self,evt_type,nets : T.List[ModifiableObject]):
 		for n in nets :

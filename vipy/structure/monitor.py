@@ -46,7 +46,7 @@ class Monitor(Component, ABC) :
 			await ReadOnly()
 			self.monitor()
 
-	async def _autoreset_events(self):
+	async def _autoreset_events_handler(self):
 		if len(self._autoreset_events) > 0 :
 			_trigger_events = [e.wait() for e in self._autoreset_events]
 			evt_trigger  : _Event = None
@@ -54,9 +54,9 @@ class Monitor(Component, ABC) :
 				evt_trigger = await First(*_trigger_events)
 				evt_trigger.parent.clear()
 
-	async def build(self,is_top = False):
+	def build(self,is_top = False):
 		super(Monitor, self).build(is_top)
-		self._autoreset_process = cocotb.start_soon(self._autoreset_events())
+		self._autoreset_process = cocotb.start_soon(self._autoreset_events_handler())
 
 	def start(self):
 		if self._run_process is not None :
@@ -70,7 +70,8 @@ class Monitor(Component, ABC) :
 
 	def add_evt_to_sensitivity(self,evt : Trigger):
 		if evt not in self._sensitivity_list :
-			self._sensitivity_list.append(evt)
+			trg = evt.wait() if isinstance(evt,Event) else evt
+			self._sensitivity_list.append(trg)
 
 	def add_edge_to_sensitivity(self,evt_type,nets : T.List[ModifiableObject]):
 		for n in nets :
