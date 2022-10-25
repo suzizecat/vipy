@@ -1,6 +1,12 @@
 import typing as T
 from math import prod
 from copy import  copy
+import os
+
+
+def is_verilator() -> bool :
+	return os.environ["SIM"] == "verilator"
+
 
 def int_to_vector(v: T.Union[int, T.List[T.Any]], vdim: T.Tuple[int]) -> T.List[int]:
 	if len(vdim) == 0:
