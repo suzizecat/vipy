@@ -116,3 +116,7 @@ class GlobalEnv(metaclass=Singleton):
 			return ret
 		else :
 			return self.top
+
+	@property
+	def log(self):
+		return self._log
