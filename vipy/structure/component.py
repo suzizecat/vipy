@@ -54,7 +54,7 @@ class Component(object):
 	def is_monitor(self):
 		return False
 
-	def end_of_build(self):
+	def post_build(self):
 		pass
 
 	def build(self,is_top = False):
@@ -76,7 +76,7 @@ class Component(object):
 		for comp in self.subcomponents :
 			comp.build()
 
-		self.end_of_build()
+		self.post_build()
 		active_state = "  ACTIVE" if self.is_active else "INACTIVE"
 		if self.is_active :
 			GlobalEnv()._log.lhigh(f"Built component {self._name:{GlobalEnv()._namelen}s} : {active_state} {type(self).__name__}")

@@ -43,7 +43,7 @@ class AdcSarBase(GenericDriver):
 		self.req_start_time = cycles_start * base_time
 		self.req_clk_cycles_conversion = cycles_conversion
 
-	def end_of_build(self):
+	def post_build(self):
 		self._log.llow(f"ADC SAR Timing parameters are:")
 		self._log.llow(f"  POWER-UP    : {get_time_from_sim_steps(self.req_enable_len,'ns')} ns")
 		self._log.llow(f"  START PULSE : {get_time_from_sim_steps(self.req_start_time,'ns')} ns")
