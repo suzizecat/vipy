@@ -68,10 +68,14 @@ class Monitor(Component, ABC) :
 			self._run_process.kill()
 		self._run_process = None
 
-	def add_evt_to_sensitivity(self,evt : Trigger):
-		if evt not in self._sensitivity_list :
-			trg = evt.wait() if isinstance(evt,Event) else evt
-			self._sensitivity_list.append(trg)
+	def add_evt_to_sensitivity(self,evt : T.Union[T.Iterable[Trigger],Trigger]):
+		if hasattr(evt,"__iter__") :
+			for e in evt :
+				self.add_evt_to_sensitivity(e)
+		else:
+			if evt not in self._sensitivity_list :
+				trg = evt.wait() if isinstance(evt,Event) else evt
+				self._sensitivity_list.append(trg)
 
 	def add_edge_to_sensitivity(self,evt_type,nets : T.List[ModifiableObject]):
 		for n in nets :
@@ -81,6 +85,16 @@ class Monitor(Component, ABC) :
 		for signal in [getattr(self.itf, field.name) for field in fields(self.itf) if pattern is None or fnmatch(field.name,pattern)] :
 			self.add_evt_to_sensitivity(Edge(signal))
 
-	def add_evt_to_autoreset(self, evt : Event):
-		if evt not in self._autoreset_events :
-			self._autoreset_events.append(evt)
+	def add_evt_to_autoreset(self, evt : T.Union[T.Iterable[Event],Event]):
+		if hasattr(evt,"__iter__") :
+			for e in evt :
+				self.add_evt_to_autoreset(e)
+		else:
+			if evt not in self._autoreset_events :
+				self._autoreset_events.append(evt)
+
+	def evt_name(self,name : str):
+		return  f"{self.name}@{name}"
+
+	def trigger_name(self,evt_name : str):
+		return  f"{self.evt_name(evt_name)}.wait()"

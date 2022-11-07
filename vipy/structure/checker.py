@@ -52,10 +52,14 @@ class Checker(Component, ABC) :
 			self._run_process.kill()
 		self._run_process = None
 
-	def add_evt_to_sensitivity(self,evt : Trigger):
-		if evt not in self._sensitivity_list :
-			trg = evt.wait() if isinstance(evt,Event) else evt
-			self._sensitivity_list.append(trg)
+	def add_evt_to_sensitivity(self,evt : T.Union[T.Iterable[Trigger],Trigger]):
+		if hasattr(evt,"__iter__") :
+			for e in evt :
+				self.add_evt_to_sensitivity(e)
+		else:
+			if evt not in self._sensitivity_list :
+				trg = evt.wait() if isinstance(evt,Event) else evt
+				self._sensitivity_list.append(trg)
 
 	def add_edge_to_sensitivity(self,evt_type,nets : T.List[ModifiableObject]):
 		for n in nets :
