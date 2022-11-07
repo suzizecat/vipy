@@ -42,6 +42,15 @@ class FieldSize:
 		"""Number of bits to be included in the field."""
 		self.length = length
 
+	def __len__(self) -> int :
+		return self.length
+
+	def __str__(self) -> str:
+		if len(self) > 1 :
+			return f"[{self.end:d}:{self.offset:d}]"
+		else :
+			return f"[{self.offset}]"
+
 	@property
 	def end(self) -> int:
 		"""
@@ -153,6 +162,9 @@ class Field:
 
 		"""Held value, should be changed through accessors"""
 		self._value = 0
+
+	def __repr__(self) -> str:
+		return f"<{type(self).__name__} {self.name}{self.size!s} = {self.value}"
 
 	def __len__(self):
 		"""
