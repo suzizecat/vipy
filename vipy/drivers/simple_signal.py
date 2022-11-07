@@ -30,6 +30,15 @@ class SignalDriver(GenericDriver):
 
 	@drive_method
 	async def pulse(self,value, time = 1, unit = "step"):
+		prev_val = self.itf.sig.value
 		self.itf.sig.value = value
 		await Timer(time,unit)
-		self.itf.sig.value = self.reset_state
+		self.itf.sig.value = prev_val
+
+	@drive_method
+	async def pulse_evt(self,value,evt):
+		prev_val = self.itf.sig.value
+		await evt
+		self.itf.sig.value = value
+		await evt
+		self.itf.sig.value = prev_val
