@@ -37,8 +37,19 @@ class Monitor(Component, ABC) :
 	def is_monitor(self):
 		return True
 
+	@property
+	def events(self) -> T.List[Event]:
+		return [getattr(self.evt, field.name) for field in fields(self.evt)]
+
+	def clear_all_events(self):
+		for e in self.events :
+			e.clear()
+
 	async def reset(self):
+		self._log.debug(f"Reset command")
+
 		self.start()
+		await self.reset_all()
 
 	async def _run(self):
 		while True:
@@ -47,16 +58,24 @@ class Monitor(Component, ABC) :
 			self.monitor()
 
 	async def _autoreset_events_handler(self):
+		self._log.debug(f"Start autoclear event handler")
 		if len(self._autoreset_events) > 0 :
 			_trigger_events = [e.wait() for e in self._autoreset_events]
 			evt_trigger  : _Event = None
 			while True :
 				evt_trigger = await First(*_trigger_events)
+				self._log.debug(f"Clear event {evt_trigger!r}")
 				evt_trigger.parent.clear()
 
-	def build(self,is_top = False):
-		super(Monitor, self).build(is_top)
+	def build(self):
+		super(Monitor, self).build()
 		self._autoreset_process = cocotb.start_soon(self._autoreset_events_handler())
+
+	def post_build(self):
+		super().post_build()
+		evt : Event
+		for evt in [getattr(self.evt, field.name) for field in fields(self.evt)]:
+			evt.name = self.evt_name(evt.name)
 
 	def start(self):
 		if self._run_process is not None :
@@ -66,6 +85,7 @@ class Monitor(Component, ABC) :
 	def stop(self):
 		if self._run_process is not None:
 			self._run_process.kill()
+		self.clear_all_events() # No issue in clearing anyway
 		self._run_process = None
 
 	def add_evt_to_sensitivity(self,evt : T.Union[T.Iterable[Trigger],Trigger]):

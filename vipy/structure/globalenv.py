@@ -57,6 +57,22 @@ class VipyLogAdapter(LoggerAdapter):
 	def llow( self, msg: object,*args: object,stacklevel : int=1,**kwargs: object ) -> None:
 		self.log(self.LOW, msg, *args,stacklevel=stacklevel+2,**kwargs)
 
+	def debug( self, msg: object,*args: object,stacklevel : int=1,**kwargs: object ) -> None:
+		self.log(logging.DEBUG, msg, *args,stacklevel=stacklevel+2,**kwargs)
+
+	def warning( self, msg: object,*args: object,stacklevel : int=1,**kwargs: object ) -> None:
+		self.log(logging.WARNING, msg, *args,stacklevel=stacklevel+2,**kwargs)
+
+	def error( self, msg: object,*args: object,stacklevel : int=1,**kwargs: object ) -> None:
+		self.log(logging.ERROR, msg, *args,stacklevel=stacklevel+2,**kwargs)
+
+	def fatal( self, msg: object,*args: object,stacklevel : int=1,**kwargs: object ) -> None:
+		self.log(logging.FATAL, msg, *args,stacklevel=stacklevel+2,**kwargs)
+
+	# def log(self,level: int, msg: object, *args: object, stacklevel: int = 1,  **kwargs: object) -> None:
+	# 	#for line in str(msg).split("\n"):
+	# 		super(VipyLogAdapter, self).log(level,line,*args,stacklevel=stacklevel+1,**kwargs)
+
 	def process(self, msg, kwargs):
 		#return (f"{self.ref.name:{GlobalEnv()._namelen}s} - {msg}", kwargs)
 

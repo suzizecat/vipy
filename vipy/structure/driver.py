@@ -21,7 +21,6 @@ class GenericDriver(Component,ABC):
 	def __init__(self):
 		super().__init__()
 		self._driven_signals = set()
-		self.active = False
 
 	@abstractmethod
 	async def reset(self):
@@ -40,7 +39,8 @@ class GenericDriver(Component,ABC):
 
 	def build(self):
 		if self.itf is not None :
-			self.active = GlobalEnv().register_driver(self)
+
+			self._build_active = GlobalEnv().register_driver(self)
 		super().build()
 
 	def register_signal_as_driven(self,signal : ModifiableObject):

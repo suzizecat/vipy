@@ -23,9 +23,12 @@ class Component(object):
 		super().__init__()
 		self._name = None
 		self.itf  = None
-		self.active = True
+		self._active = True
 
 		self._log : VipyLogAdapter = cocotb.log
+
+		self._user_active = True
+		self._build_active = True
 
 	@property
 	def name(self):
@@ -40,7 +43,7 @@ class Component(object):
 
 	@property
 	def subcomponents(self):
-		return [x for x in vars(self).values() if isinstance(x,Component)]
+		return [x for name, x in vars(self).items() if not name.startswith("_") and isinstance(x,Component)]
 
 	@property
 	def is_driver(self):
@@ -57,7 +60,7 @@ class Component(object):
 	def post_build(self):
 		pass
 
-	def build(self,is_top = False):
+	def build(self):
 		if GlobalEnv().top is None :
 			GlobalEnv().top = self
 			GlobalEnv()._log.lhigh(f"")
@@ -89,7 +92,7 @@ class Component(object):
 
 	def _refresh_sub_names(self):
 		for n, var in vars(self).items():
-			if isinstance(var, Component):
+			if not n.startswith("_") and isinstance(var, Component):
 				var.name = f"{self.name}.{n}"
 
 	async def reset(self):
@@ -97,23 +100,27 @@ class Component(object):
 
 	@property
 	def drivers(self) -> T.List["GenericDrivers"]:
-		return [x for x in vars(self).values() if isinstance(x,Component) and x.is_driver]
+		return [x for x in self.subcomponents if x.is_driver]
 
 	@property
 	def checkers(self) :
-		return [x for x in vars(self).values() if isinstance(x,Component) and x.is_checker]
+		return [x for x in self.subcomponents if x.is_checker]
 
 	@property
 	def monitors(self) :
-		return [x for x in vars(self).values() if isinstance(x,Component) and x.is_monitor]
+		return [x for x in self.subcomponents if x.is_monitor]
 
 	@property
 	def simplecomponents(self) :
-		return [x for x in vars(self).values() if isinstance(x,Component) and not  (x.is_monitor or x.is_checker or x.is_driver)]
+		return [x for x in self.subcomponents if not (x.is_monitor or x.is_checker or x.is_driver)]
 
 	@property
 	def is_active(self):
-		return self.active
+		return self._user_active and self._build_active
+
+	@is_active.setter
+	def is_active(self,value):
+		self._user_active = bool(value)
 
 	async def reset_drivers(self):
 		rst_process_list = list()
@@ -158,8 +165,3 @@ class Component(object):
 		rst_process_list.append(cocotb.start_soon(self.reset_checkers()).join())
 		rst_process_list.append(cocotb.start_soon(self.reset_components()).join())
 		await Combine(*rst_process_list)
-
-	def bind_itf(self,device):
-		self.itf = bind_itf(self.itf,device)
-
-		
