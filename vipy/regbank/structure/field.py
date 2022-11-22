@@ -47,9 +47,9 @@ class FieldSize:
 
 	def __str__(self) -> str:
 		if len(self) > 1 :
-			return f"[{self.end:d}:{self.offset:d}]"
+			return f"[{self.end:2d}:{self.offset:2d}]"
 		else :
-			return f"[{self.offset}]"
+			return f"[{self.offset:>5d}]"
 
 	@property
 	def end(self) -> int:
@@ -140,14 +140,14 @@ class FieldSize:
 
 
 class Field:
-	def __init__(self,name : str, size : T.Union[str,FieldSize], access : str = "RW"):
+	def __init__(self,name : str, size : T.Union[str,FieldSize], access : str = "RW", virtual : bool = False):
 		"""
 		Describes a register field with its name, size, access specifier and value.
 
 		:param name: Field name.
 		:param size: Field size specifier.
 		:param access: Access specifier
-
+		:param virtual: Virtual field specifier
 		:raises ValueError: if the size specifier, passed as a string, is invalid.
 		"""
 
@@ -158,13 +158,26 @@ class Field:
 		self.size : FieldSize = size  if isinstance(size,FieldSize) else FieldSize.from_specifier(size)
 
 		"""Access specifier"""
-		self.access : Access = access_mapping[access]
+		self.access_attributes = dict()
+		if ":" in access :
+			access_string, access_attributes = access.strip().split(":")
+			self.access_attributes.update(attr.strip().split("=") for attr in access_attributes.split(","))
+		else :
+			access_string = access
+		self.access : Access = access_mapping[access_string]
+
 
 		"""Held value, should be changed through accessors"""
 		self._value = 0
 
+		"""Attribute to indicate that a field is not a field defined by the user"""
+		self.virtual = virtual
+
+	def __gt__(self, other : "Field"):
+		return self.size.offset > other.size.offset
+
 	def __repr__(self) -> str:
-		return f"<{type(self).__name__} {self.name}{self.size!s} = {self.value}"
+		return f"<{type(self).__name__} '{self.name}' {self.size!s} = {self.value}>"
 
 	def __len__(self):
 		"""
