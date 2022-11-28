@@ -4,6 +4,107 @@ from .field import Field
 from .field import FieldSize
 from .access import Access
 from copy import copy
+import re
+
+class MultiRegSizeDescriptor:
+	_pattern = re.compile(r"\[\s*(\d+)\s*:\s*(\d+)\s*\]")
+	_simple_name_pattern = re.compile(r"^\w+(?:\[\s*\d+\s*:\s*\d+\s*\])*$")
+	def __init__(self, descriptor : str):
+		"""
+		This class provides convenience functions to handle (multidimentionals) arrays of registers.
+		The format of the descriptor should contain size specification in the form of `[a:b]` with a != b.
+		:param descriptor: String containing the size descriptor. Can contain other stuff, in example "my_reg[3:0]"
+		is valid
+		"""
+		self.descriptor = descriptor
+
+		self._indexes : T.List[int] = list()
+		self._init_values : T.List[int]= list()
+		self._end_values : T.List[int] = list()
+		self._incr_values = list()
+		self._valid = False
+		self._is_simple = False
+		self._last_iter_reached = False
+		self._parse()
+
+	def _parse(self):
+		"""
+		Parse the descriptor and extract relevant informations
+		"""
+		self._init_values.clear()
+		self._last_iter_reached = False
+		self._end_values.clear()
+		self._incr_values.clear()
+
+		self._is_simple = self._simple_name_pattern.fullmatch(self.descriptor) is not None
+
+		parsed_output = MultiRegSizeDescriptor._pattern.findall(self.descriptor)
+		self._valid = len(parsed_output) > 0
+
+		if self._valid :
+			self._init_values, self._end_values = zip(*[(int(x),int(y)) for x,y in parsed_output])
+
+			for start, end in parsed_output :
+				self._incr_values.append(1 if start < end else -1)
+
+	def __iter__(self):
+		self._indexes = list(self._init_values)
+		self._last_iter_reached = False
+		return self
+
+	def __next__(self) -> T.Tuple[int,...]:
+		"""
+		Iterating through the size descriptor will return tuples of positions, incrementing the 'LSB' value.
+		The increment might be negative if the starting value is higher than the end value.
+		:return: Tuple of ints, one value per size descriptor.
+		"""
+		if self._last_iter_reached :
+			raise StopIteration
+		ret = tuple(self._indexes)
+		for i in reversed(range(len(self._indexes))) :
+			if self._indexes[i] != self._end_values[i] :
+				self._indexes[i] += self._incr_values[i]
+				return ret
+			else :
+				self._indexes[i] = self._init_values[i]
+		self._last_iter_reached = True
+		return ret
+
+	def specialized_name(self,idx : T.Tuple[int]) -> str:
+		output = self.descriptor
+		for i in range(len(self._indexes)) :
+			output = self._pattern.sub(str(idx[i]),output,count=1)
+
+		return output
+
+	@property
+	def is_valid(self) -> bool:
+		return self._valid
+
+	@property
+	def is_simple(self) -> bool:
+		return self._is_simple
+
+	@property
+	def is_trivial_multi(self) -> bool:
+		return self._is_simple and self.is_valid
+
+	@property
+	def base_descriptor(self) -> str:
+		if self.is_valid :
+			if self.is_simple :
+				return self.descriptor[:self.descriptor.find("[")]
+			else :
+				raise ValueError(f"Base descriptor is invalid on complex descriptor '{self.descriptor}'")
+		else :
+			return self.descriptor
+
+	@property
+	def boundaries(self) -> T.List[T.Tuple[int,int]]:
+		"""
+		:return: Return the list of (init_value,end_value) tuples
+		"""
+		return list(zip(self._init_values,self._end_values))
 
 
 class Register:
@@ -23,7 +124,7 @@ class Register:
 		self.reset_value : int = reset_value
 
 		"""Register name. Should be valid identifier"""
-		self.name : str = name
+		self._name : str = name
 
 		"""Register size, default to REGISTER.DEFAULT_SIZE. Cannot be changed after initialization."""
 		self._size = reg_size if reg_size is not None else copy(Register.DEFAULT_SIZE)
@@ -31,7 +132,10 @@ class Register:
 		"""List of fields, referenced by field name"""
 		self.fields : dict[str,Field] = dict()
 
+		"""Hold the index of the last reserved field, to generate unique names"""
 		self._reserved_counter = 0
+
+		self.multireg = MultiRegSizeDescriptor(self.name)
 
 	def __len__(self) -> int :
 		"""Register size"""
@@ -99,6 +203,17 @@ class Register:
 	def reset(self):
 		"""Apply the register reset value to all the fields"""
 		self.value = self.reset_value
+
+	@property
+	def name(self) -> str:
+		return self._name
+
+	@name.setter
+	def name(self,new_name : str):
+		self._name = new_name
+		if self.multireg is not None :
+			self.multireg.descriptor = new_name
+			self.multireg._parse()
 
 	@property
 	def used_mask(self):
@@ -229,7 +344,7 @@ class Register:
 		:param prefix: Prefix to add, if nothing is provided, the register name will be used as a prefix
 		"""
 		if prefix is None :
-			prefix = self.name + "_"
+			prefix = self.multireg.base_descriptor + "_"
 		for field_name in [f.name for f in self.active_fields] :
 			self.rename_field(field_name,f"{prefix}{field_name}")
 

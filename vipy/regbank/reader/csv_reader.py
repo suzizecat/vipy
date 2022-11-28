@@ -24,6 +24,7 @@ class CSVReader:
 		self.process_field = False
 
 		self._last_shadow = "DEFAULT"
+		self.access_replace = dict()
 		pass
 
 	def read_csv(self,path : str):
@@ -88,7 +89,13 @@ class CSVReader:
 			self.current_rb.add_register(self.current_reg)
 
 	def _add_field_from_line(self, line):
-		f = Field(line[CSVReader.FNAME],FieldSize.from_specifier(line[CSVReader.BITS]),line[CSVReader.ACCESS])
+		access_spec : str = line[CSVReader.ACCESS]
+		access_code = line[CSVReader.ACCESS].split(":")[0]
+
+		if access_code in self.access_replace :
+			access_spec = access_spec.replace(access_spec,self.access_replace[access_code])
+
+		f = Field(line[CSVReader.FNAME],FieldSize.from_specifier(line[CSVReader.BITS]),access_spec)
 		if f.access.is_shadow:
 			if "shadow" in f.access_attributes :
 				self._last_shadow = f.access_attributes["shadow"]

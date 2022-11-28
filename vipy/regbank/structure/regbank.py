@@ -57,6 +57,8 @@ class RegisterBank:
 
 		self.shadow_groups : T.Dict[str,ShadowGroup] = dict()
 
+		self.multireg_addr_offset = data_width // 8
+
 	def add_register(self, reg : Register):
 		"""Add a register to the register bank"""
 		if reg.name in self._registers:
@@ -84,7 +86,6 @@ class RegisterBank:
 				return group
 			else :
 				raise KeyError(f"There is already a group named {group.name}. Try using a string to retrieve the existing group")
-
 
 	def delete_register(self,reg : T.Union[int,str,Register]) -> Register:
 		"""
@@ -135,6 +136,45 @@ class RegisterBank:
 			return self[target]
 		else :
 			return None
+
+	def flatten_all_multiregisters(self):
+		"""
+		Flatten all multiregisters.
+		"""
+		for register in [r for r in self if r.multireg.is_valid]:
+			self.flatten_multiregister(register)
+
+	def flatten_nontrivial_multiregisters(self):
+		"""
+		Select all 'non-trivial' multiregisters (registers with size specification
+		in other place than the end of the name) and flatten them.
+		"""
+		for register in [r for r in self if r.multireg.is_valid and not r.multireg.is_simple]:
+			self.flatten_multiregister(register)
+
+	def flatten_multiregister(self,register : Register):
+		"""
+		Remove provided register if it is a multiregister and create all appropriate copy, unlinking fields in the process.
+		:param register: Register to flatten
+		"""
+		to_add_list = list()
+
+		if register.multireg.is_valid :
+			new_offset = register.offset
+			for name in [register.multireg.specialized_name(x) for x in register.multireg] :
+				reg = Register(name,new_offset,register.size,register.reset_value)
+				for f in register :
+					nfield = Field(f.name,f.size,f.access.name,f.virtual)
+					nfield.access_attributes = f.access_attributes
+					reg.add_field(nfield)
+				new_offset += self.multireg_addr_offset
+				to_add_list.append(reg)
+
+			self.delete_register(register)
+
+			for new_reg in to_add_list :
+				self.add_register(new_reg)
+
 
 	def reset(self):
 		"""This function call the "reset" of all included registers"""
@@ -220,9 +260,11 @@ class RegisterBank:
 			print(f"Filling register {register.name}")
 			register.fill()
 
-
 	@property
 	def as_report(self) -> str:
+		"""
+		:return: a report of the content of the register bank
+		"""
 		ret = ""
 		ret += f"{'':#<80s}\n" \
 		       f"#{self.prefix + ' register bank': ^78s}#\n" \
