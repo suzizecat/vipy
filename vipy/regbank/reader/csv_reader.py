@@ -91,18 +91,25 @@ class CSVReader:
 	def _add_field_from_line(self, line):
 		access_spec : str = line[CSVReader.ACCESS]
 		access_code = line[CSVReader.ACCESS].split(":")[0]
+		name = line[CSVReader.FNAME]
+		if name.upper() == "RESERVED":
+			access_code = "RESERVED"
 
 		if access_code in self.access_replace :
-			access_spec = access_spec.replace(access_spec,self.access_replace[access_code])
+			access_spec = access_spec.replace(access_code,self.access_replace[access_code])
+			access_code = line[CSVReader.ACCESS].split(":")[0]
 
-		f = Field(line[CSVReader.FNAME],FieldSize.from_specifier(line[CSVReader.BITS]),access_spec)
-		if f.access.is_shadow:
-			if "shadow" in f.access_attributes :
-				self._last_shadow = f.access_attributes["shadow"]
-			else :
-				f.access_attributes["shadow"] = self._last_shadow
-			self.current_rb.add_shadow_group(self._last_shadow).add_register(self.current_reg)
-		self.current_reg.add_field(f)
+		if access_code == "RESERVED":
+			self.current_reg.add_reserved_field(FieldSize.from_specifier(line[CSVReader.BITS]))
+		else :
+			f = Field(line[CSVReader.FNAME],FieldSize.from_specifier(line[CSVReader.BITS]),access_spec)
+			if f.access.is_shadow:
+				if "shadow" in f.access_attributes :
+					self._last_shadow = f.access_attributes["shadow"]
+				else :
+					f.access_attributes["shadow"] = self._last_shadow
+				self.current_rb.add_shadow_group(self._last_shadow).add_register(self.current_reg)
+			self.current_reg.add_field(f)
 
 	def _finalize_shadow_groups(self):
 		for group in self.current_rb.shadow_groups.values() :
