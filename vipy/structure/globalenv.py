@@ -4,7 +4,7 @@ from vipy.utils.meta import Singleton
 import typing as T
 from cocotb.handle import ModifiableObject
 import cocotb
-from cocotb.log import SimBaseLog
+from cocotb.log import SimBaseLog, SimLogFormatter
 from logging import LoggerAdapter, Filter
 import os
 from inspect import getmodule
@@ -20,10 +20,12 @@ class VipyLogAdapter(LoggerAdapter):
 		logger_name = "vipy"
 		if ref.name is not None :
 			logger_name += f".{ref.name}"
-		logger = logging.getLogger().getChild(logger_name)
+		root_logger = logging.getLogger()
+		logger = root_logger.getChild(logger_name)
 		super().__init__(logger,dict())
 
 		envlevel = os.environ["VIPY_LOG"] if "VIPY_LOG" in os.environ else None
+		envlfile = os.environ["VIPY_LOG_FILE"] if "VIPY_LOG_FILE" in os.environ else None
 
 		if level is not None :
 			self.setLevel(level)
@@ -38,6 +40,12 @@ class VipyLogAdapter(LoggerAdapter):
 				self.setLevel(VipyLogAdapter.DEFAULT)
 		else :
 			self.setLevel(VipyLogAdapter.DEFAULT)
+
+		if envlfile is not None :
+			log_file_handler = logging.FileHandler(envlfile, "w")
+			log_file_handler.setLevel(logging.DEBUG)
+			log_file_handler.setFormatter(SimLogFormatter())
+			root_logger.addHandler(log_file_handler)
 
 
 	def indent(self,addlevel = 1):

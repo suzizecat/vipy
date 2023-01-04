@@ -4,4 +4,3 @@ from .driver import GenericDriver
 from .monitor import Monitor
 from .checker import Checker
 from .driver import drive_method
-from .component import bind_itf

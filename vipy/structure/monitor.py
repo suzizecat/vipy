@@ -64,7 +64,7 @@ class Monitor(Component, ABC) :
 			evt_trigger  : _Event = None
 			while True :
 				evt_trigger = await First(*_trigger_events)
-				self._log.debug(f"Clear event {evt_trigger!r}")
+				#self._log.debug(f"Clear event {evt_trigger!r}")
 				evt_trigger.parent.clear()
 
 	def build(self):

@@ -7,6 +7,9 @@ from .field import Field
 
 import typing as T
 
+import logging
+
+logger = logging.getLogger()
 
 class RegbankFieldsIterator:
 	def __init__(self, register_bank : "RegisterBank"):
@@ -65,6 +68,8 @@ class RegisterBank:
 			raise ValueError(f"Register name {reg.name} is already used in the {self.prefix} register bank.")
 		if reg.offset in self._addr_map:
 			raise ValueError(f"Register offset {reg.offset} of {reg.name} is already used in the {self.prefix} register bank.")
+		if reg.offset >= 2**self.address_width :
+			logger.warning(f"Register {reg.name} offset 0x{reg.offset:x} will not fit in the regbank address bus ({self.address_width:d} bits)")
 
 		self._registers[reg.name] = reg
 		self._addr_map[reg.offset] = reg
@@ -174,7 +179,6 @@ class RegisterBank:
 
 			for new_reg in to_add_list :
 				self.add_register(new_reg)
-
 
 	def reset(self):
 		"""This function call the "reset" of all included registers"""

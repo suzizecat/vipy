@@ -116,7 +116,7 @@ class Component(object):
 		# Report the build process
 		active_state = "  ACTIVE" if self.is_active else "INACTIVE"
 		log_line = f"Built component {self._name:{GlobalEnv()._namelen}s} : {active_state} {type(self).__name__}"
-		GlobalEnv()._log.lhigh(log_line) if self.is_active else GlobalEnv()._log.lhigh(log_line)
+		GlobalEnv()._log.lhigh(log_line) if self.is_active else GlobalEnv()._log.llow(log_line)
 
 		if GlobalEnv().top is self :
 			GlobalEnv()._log.lhigh(f"{' BUILD ENV COMPLETE ':#^80s}")

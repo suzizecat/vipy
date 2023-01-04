@@ -26,6 +26,7 @@ class SignalDriver(GenericDriver):
 
 	@drive_method
 	async def set(self,value):
+		self._log.debug(f"Set {self.name} to 0b{value:0{self.itf.sig.value.n_bits}b}")
 		self.itf.sig.value = value
 
 	@drive_method
