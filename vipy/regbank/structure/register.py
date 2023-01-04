@@ -70,6 +70,12 @@ class MultiRegSizeDescriptor:
 		self._last_iter_reached = True
 		return ret
 
+	def __len__(self):
+		ret = 1
+		for i in range(len(self._end_values)) :
+			ret *= (abs(self._end_values[i] - self._init_values[i]))
+		return ret
+
 	def specialized_name(self,idx : T.Tuple[int]) -> str:
 		output = self.descriptor
 		for i in range(len(self._indexes)) :

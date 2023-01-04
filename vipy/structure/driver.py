@@ -33,7 +33,6 @@ class GenericDriver(Component):
 		self._driven_signals = set()
 
 
-	@override
 	@property
 	def is_driver(self) -> bool:
 		"""Returns true as this object is the base for a driver"""
