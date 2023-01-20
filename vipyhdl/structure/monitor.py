@@ -101,8 +101,11 @@ class Monitor(Component, ABC) :
 		for n in nets :
 			self.add_evt_to_sensitivity(evt_type(n))
 
-	def add_itf_to_sensitivity(self, pattern):
-		for signal in [getattr(self.itf, field.name) for field in fields(self.itf) if pattern is None or fnmatch(field.name,pattern)] :
+	def add_itf_to_sensitivity(self, pattern = None):
+		signals = [getattr(self.itf, field.name) for field in fields(self.itf) if pattern is None or fnmatch(field.name,pattern)]
+		if len(signals) == 0 :
+			self._log.warning(f"Sensitivity lookup found no matching signals in {self.name}.itf for pattern {pattern!s}")
+		for signal in signals :
 			self.add_evt_to_sensitivity(Edge(signal))
 
 	def add_evt_to_autoreset(self, evt : T.Union[T.Iterable[Event],Event]):
