@@ -19,6 +19,7 @@ class CSVReader:
 		self.current_rb : RegisterBank = None
 		self.current_reg: Register = None
 		self.ignore_invalid = True
+		self.default_invalid = False
 
 		self.process_reg = False
 		self.process_field = False
@@ -42,19 +43,26 @@ class CSVReader:
 			Register.DEFAULT_SIZE = int(content[2][2])
 			
 			for line in content[5:] :
-				try :
-					self._process_csv_line(line)
-				except KeyError as e :
-					if self.ignore_invalid :
-						log.error(f"Skipped invalid line {','.join(line)}")
-						if self.process_reg :
-							self.current_reg = None
-							self.process_reg = False
-							self.process_field = False
+				failed = True
+				while failed:
+					try :
+						self._process_csv_line(line)
+					except KeyError as e :
+						if self.default_invalid :
+							line[self.ACCESS] = "RW"
+						elif self.ignore_invalid :
+							log.error(f"Skipped invalid line {','.join(line)}")
+							if self.process_reg :
+								self.current_reg = None
+								self.process_reg = False
+								self.process_field = False
+							failed = False
+						else :
+							log.fatal(f"A key error occured on line {line}")
+							log.fatal(f": {e!s}")
+							raise e
 					else :
-						log.fatal(f"A key error occured on line {line}")
-						log.fatal(f": {e!s}")
-						raise e
+						failed = False
 
 			self._validate_register()
 			self._finalize_shadow_groups()
