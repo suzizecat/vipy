@@ -1,7 +1,7 @@
 import re
 import typing as T
-from vipy.regbank.structure.access import Access
-from vipy.regbank.structure.access import access_mapping
+from vipyhdl.regbank.structure.access import Access
+from vipyhdl.regbank.structure.access import access_mapping
 
 
 class FieldSize:

@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from cocotb.handle import ModifiableObject
 from cocotb.triggers import *
-from vipy.structure import GenericDriver, GlobalEnv, drive_method
+from vipyhdl.structure import GenericDriver, GlobalEnv, drive_method
 
 
 class SignalDriver(GenericDriver):

@@ -27,7 +27,7 @@ def drive_method(func):
 class GenericDriver(Component):
 	def __init__(self):
 		"""
-		This class implement the base of any Vipy driver.
+		This class implement the base of any vipyhdl driver.
 		"""
 		super().__init__()
 		self._driven_signals = set()

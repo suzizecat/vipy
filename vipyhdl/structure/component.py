@@ -105,7 +105,7 @@ class Component(object):
 			self._name = type(self).__name__
 
 		self._log = VipyLogAdapter(self)
-		self._log.debug(f"Set vipy logger for component {self.name}")
+		self._log.debug(f"Set vipyhdl logger for component {self.name}")
 
 		self._refresh_sub_names()
 		for comp in self.subcomponents :

@@ -5,8 +5,8 @@ from cocotb import Task
 from cocotb.handle import ModifiableObject
 from cocotb.clock import get_sim_steps
 from cocotb.triggers import *
-from vipy.structure import *
-from vipy.drivers import *
+from vipyhdl.structure import *
+from vipyhdl.drivers import *
 import typing as T
 
 class AdcSarBase(GenericDriver):

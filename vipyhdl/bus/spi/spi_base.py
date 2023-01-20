@@ -5,8 +5,8 @@ import cocotb
 from  cocotb.handle import ModifiableObject
 from cocotb.triggers import Event, RisingEdge, FallingEdge, Edge, First, NextTimeStep
 
-from vipy.bus.base import DataWord
-from vipy.bus.base.serial import BaseSerial, SerialMode
+from vipyhdl.bus.base import DataWord
+from vipyhdl.bus.base.serial import BaseSerial, SerialMode
 
 import enum
 

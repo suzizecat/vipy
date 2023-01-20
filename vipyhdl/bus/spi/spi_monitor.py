@@ -4,7 +4,7 @@ import cocotb
 from cocotb import Task
 from cocotb.triggers import *
 
-from vipy.bus.base.serial import BaseSerial, SerialMode
+from vipyhdl.bus.base.serial import BaseSerial, SerialMode
 from .spi_base import SPIBase, SPIInterface
 import enum
 

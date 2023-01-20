@@ -1,8 +1,8 @@
 from dataclasses import dataclass
 from cocotb.handle import ModifiableObject
 from cocotb.triggers import *
-from vipy.structure import GenericDriver, GlobalEnv, drive_method
-from vipy.utils.workarounds import *
+from vipyhdl.structure import GenericDriver, GlobalEnv, drive_method
+from vipyhdl.utils.workarounds import *
 import typing as T
 from cocotb.binary import BinaryValue
 from cocotb.utils import *

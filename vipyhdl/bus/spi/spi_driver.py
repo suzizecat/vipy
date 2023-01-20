@@ -7,15 +7,15 @@ from cocotb.clock import Clock
 from cocotb.utils import get_time_from_sim_steps
 from cocotb.triggers import *
 
-from vipy.bus.base.serial import BaseSerial, SerialMode
+from vipyhdl.bus.base.serial import BaseSerial, SerialMode
 from .spi_base import SPIBase, SPIInterface
 import enum
 
 from ..base.word import DataWord
 from ...utils.queue import QueueEvt
 
-from vipy.structure import *
-from vipy.drivers import *
+from vipyhdl.structure import *
+from vipyhdl.drivers import *
 
 class SPIDriver(SPIBase, GenericDriver):
 	def __init__(self, mode : SerialMode, itf : SPIInterface, clk_period : T.Tuple[int,str] = (1,"us")):

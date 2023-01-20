@@ -3,7 +3,7 @@ from cocotb.handle import ModifiableObject
 from cocotb.triggers import *
 from cocotb.clock import *
 from cocotb import *
-from vipy.structure import GenericDriver, GlobalEnv, drive_method
+from vipyhdl.structure import GenericDriver, GlobalEnv, drive_method
 
 import typing as T
 

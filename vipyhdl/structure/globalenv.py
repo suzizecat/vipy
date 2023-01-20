@@ -1,6 +1,6 @@
 import logging
 
-from vipy.utils.meta import Singleton
+from vipyhdl.utils.meta import Singleton
 import typing as T
 from cocotb.handle import ModifiableObject
 import cocotb

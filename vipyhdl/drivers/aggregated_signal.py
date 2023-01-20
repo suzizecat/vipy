@@ -2,9 +2,9 @@ import typing as T
 from cocotb.handle import ModifiableObject
 from cocotb.triggers import *
 from .simple_signal import SignalDriver
-from vipy.structure import drive_method
+from vipyhdl.structure import drive_method
 
-from vipy.regbank.structure import Register, Field
+from vipyhdl.regbank.structure import Register, Field
 
 
 class AggregatedSignalDriver(SignalDriver):
