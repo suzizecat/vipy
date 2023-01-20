@@ -313,10 +313,11 @@ class Register:
 		"""
 		return self._size
 
-	def add_reserved_field(self,pos : FieldSize):
+	def add_reserved_field(self,pos : FieldSize) -> Field:
 		"""
 		Generate and place a reserved field of the provided size
 		:param pos: Position and size of the desired field
+		:return: The created field
 		"""
 		reserved_name = f"RESERVED{self._reserved_counter}"
 		while reserved_name in self.fields :
@@ -327,14 +328,17 @@ class Register:
 		self.add_field(new_field)
 		self._reserved_counter += 1
 
-	def fill(self):
+		return new_field
+
+	def fill(self) -> bool:
 		"""
 		Fill the register with RESERVED words
+		:return: True if any filling has been added
 		"""
 		next_pos = 0
 		reserved_positions = list()
 		for field in sorted(self):
-			print(f"    Reading field {field!r}")
+
 			if field.size.offset > next_pos :
 				reserved_positions.append(FieldSize(next_pos,field.size.offset - next_pos))
 			next_pos = field.size.next
@@ -342,7 +346,10 @@ class Register:
 			reserved_positions.append(FieldSize(next_pos, self._size - next_pos))
 
 		for position in reserved_positions :
+			print(f"    Add filling on {position!s}")
 			self.add_reserved_field(position)
+
+		return len(reserved_positions) > 0
 
 	def prefix_fields_name(self,prefix : str = None):
 		"""

@@ -52,7 +52,7 @@ class RegisterBank:
 		self.itf_input_type = f"{prefix}_regbank_in_if"
 		self.itf_output_type = f"{prefix}_regbank_out_if"
 		self.itf_input = f"sif_regbank_in"
-		self.itf_output = f"sif_regbank_out"
+		self.itf_output = f"mif_regbank_out"
 
 		self.address_width = addr_width
 		self.data_width = data_width
@@ -121,7 +121,7 @@ class RegisterBank:
 		:return: address (offset) of the register
 		:raises KeyError: if regname does not exists
 		"""
-		return self[regname].offset
+		return self.get_register(regname).offset
 
 	def get_register(self, target: T.Union[Register,str,int]) -> T.Union[None,Register]:
 		"""
@@ -256,13 +256,18 @@ class RegisterBank:
 	def fields(self):
 		return RegbankFieldsIterator(self)
 
-	def fill_registers(self):
+	def fill_registers(self) -> int:
 		"""
 		Fill all holes in all registers
+		:return: The number of register that required a filling
 		"""
+		ret = 0
 		for register in self :
 			print(f"Filling register {register.name}")
-			register.fill()
+			if register.fill() :
+				ret += 1
+
+		return ret
 
 	@property
 	def as_report(self) -> str:
