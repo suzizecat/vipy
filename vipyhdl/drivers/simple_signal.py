@@ -41,5 +41,10 @@ class SignalDriver(GenericDriver):
 		prev_val = self.itf.sig.value
 		await evt
 		self.itf.sig.value = value
+		await ReadWrite()
 		await evt
 		self.itf.sig.value = prev_val
+		await ReadWrite()
+
+	def __len__(self) :
+		return self.itf.sig.value.n_bits

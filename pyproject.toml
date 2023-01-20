@@ -3,8 +3,8 @@ requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "vipyhdl"
-version = "0.0.1"
+name = "vipyhdlhdl"
+version = "0.1.0"
 authors = [
   { name="Julien FAUCHER", email="suzizecat@free.fr" },
 ]
@@ -19,5 +19,5 @@ classifiers = [
 ]
 
 [project.urls]
-"Homepage" = "https://github.com/suzizecat/vipy"
-"Bug Tracker" = "https://github.com/suzizecat/vipy/issues"
+"Homepage" = "https://github.com/suzizecat/vipyhdl"
+"Bug Tracker" = "https://github.com/suzizecat/vipyhdl/issues"
